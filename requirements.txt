@@ -1,0 +1,10 @@
+flask
+gunicorn
+python-dotenv
+joblib
+scikit-learn
+requests
+schedule
+anthropic
+numpy
+pandas
