@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fake News Detection - Advanced AI System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #7c3aed;
+            --primary-light: #a78bfa;
+            --secondary: #ec4899;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #0a0a0a;
+            --card-dark: #1a1a2e;
+            --card-light: #16213e;
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+            --border: #2d3748;
+            --glow: rgba(124, 58, 237, 0.3);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0f0f23 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(124, 58, 237, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(26, 26, 46, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(124, 58, 237, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.2rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-shadow: 0 0 20px var(--glow);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            position: relative;
+            padding: 0.5rem 0;
+            font-size: 1.05rem;
+        }
+
+        .nav-links a::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            transition: all 0.3s;
+            transform: translateX(-50%);
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--text-primary);
+        }
+
+        .nav-links a:hover::before,
+        .nav-links a.active::before {
+            width: 100%;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            margin-bottom: 4rem;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #ffffff 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.3rem;
+            max-width: 700px;
+            margin: 0 auto;
+            font-weight: 300;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(124, 58, 237, 0.2);
+            border: 1px solid rgba(124, 58, 237, 0.4);
+            color: var(--primary-light);
+            padding: 0.5rem 1.5rem;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+
+        /* Form Section */
+        .form-card {
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.8) 0%, rgba(22, 33, 62, 0.8) 100%);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.5),
+                0 0 40px rgba(124, 58, 237, 0.1);
+            margin-bottom: 3rem;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .form-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 1.2rem;
+            color: var(--text-primary);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 220px;
+            padding: 1.5rem;
+            background: rgba(10, 10, 10, 0.6);
+            border: 2px solid rgba(124, 58, 237, 0.3);
+            border-radius: 16px;
+            color: var(--text-primary);
+            font-size: 1.05rem;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 
+                0 0 0 4px rgba(124, 58, 237, 0.1),
+                0 0 30px rgba(124, 58, 237, 0.2);
+        }
+
+        textarea::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            padding: 1.3rem 2rem;
+            border-radius: 16px;
+            font-size: 1.15rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 1.5rem;
+            box-shadow: 0 8px 25px rgba(124, 58, 237, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .submit-btn:hover::before {
+            left: 100%;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(124, 58, 237, 0.5);
+        }
+
+        .submit-btn:active {
+            transform: translateY(-1px);
+        }
+
+        /* Result Section */
+        .result-card {
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.9) 0%, rgba(22, 33, 62, 0.9) 100%);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 24px;
+            padding: 3rem;
+            margin-bottom: 3rem;
+            animation: slideIn 0.5s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.5),
+                0 0 40px rgba(124, 58, 237, 0.1);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-header {
+            font-size: 2.2rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            border-radius: 16px;
+            position: relative;
+        }
+
+        .result-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 16px;
+            padding: 2px;
+            background: linear-gradient(135deg, var(--success) 0%, var(--primary) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0.5;
+        }
+
+        .result-header.real {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            text-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .result-header.real::before {
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+        }
+
+        .result-header.fake {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            text-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+        }
+
+        .result-header.fake::before {
+            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+        }
+
+        .result-header.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+            text-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+        }
+
+        .result-header.warning::before {
+            background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+        }
+
+        .result-details {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .detail-item {
+            background: rgba(10, 10, 10, 0.4);
+            padding: 1.8rem;
+            border-radius: 14px;
+            border-left: 4px solid var(--primary);
+            transition: all 0.3s;
+        }
+
+        .detail-item:hover {
+            transform: translateX(5px);
+            background: rgba(10, 10, 10, 0.6);
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: var(--primary-light);
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.8rem;
+        }
+
+        .detail-value {
+            font-size: 1.15rem;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Impact Section */
+        .impact-section {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(220, 38, 38, 0.05) 100%);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .impact-section.positive {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 150, 105, 0.05) 100%);
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .impact-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .impact-header.negative {
+            color: var(--danger);
+        }
+
+        .impact-header.positive {
+            color: var(--success);
+        }
+
+        .impact-icon {
+            font-size: 2rem;
+        }
+
+        .impact-list {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .impact-item {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .impact-item:hover {
+            background: rgba(0, 0, 0, 0.3);
+            transform: translateX(5px);
+        }
+
+        .impact-item-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .impact-item-text {
+            flex: 1;
+        }
+
+        .impact-item-title {
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            font-size: 1.05rem;
+        }
+
+        .impact-item-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* Confidence Bar */
+        .confidence-bar-container {
+            background: rgba(10, 10, 10, 0.4);
+            padding: 2rem;
+            border-radius: 14px;
+            margin-top: 1.5rem;
+        }
+
+        .confidence-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .confidence-bar-bg {
+            height: 14px;
+            background: rgba(124, 58, 237, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .confidence-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .confidence-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .confidence-note {
+            margin-top: 1.2rem;
+            padding: 1.2rem;
+            background: rgba(124, 58, 237, 0.1);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            text-align: center;
+            border: 1px solid rgba(124, 58, 237, 0.2);
+        }
+
+        /* Features Section */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 4rem;
+        }
+
+        .feature {
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.6) 0%, rgba(22, 33, 62, 0.6) 100%);
+            border: 1px solid rgba(124, 58, 237, 0.2);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+
+        .feature:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feature:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.4),
+                0 0 40px rgba(124, 58, 237, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1.2rem;
+            filter: drop-shadow(0 0 10px rgba(124, 58, 237, 0.5));
+        }
+
+        .feature h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.8rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .feature p {
+            color: var(--text-secondary);
+            font-size: 0.98rem;
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        footer {
+            background: rgba(26, 26, 46, 0.8);
+            border-top: 1px solid rgba(124, 58, 237, 0.2);
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 2.5rem;
+            margin-top: 5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        footer p {
+            font-size: 0.95rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-links {
+                gap: 1.5rem;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+
+            .result-header {
+                font-size: 1.7rem;
+            }
+
+            .form-card,
+            .result-card {
+                padding: 2rem;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="nav-container">
+        <h1 class="logo">🛡️ FakeNews Detector</h1>
+        <div class="nav-links">
+            <a href="/" class="active">Home</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/auto-collected">Auto-Collected</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    
+    <div class="hero">
+        <h1>🔍 AI-Powered Fake News Detection</h1>
+        <p class="hero-subtitle">Advanced machine learning technology to verify news authenticity and combat misinformation in real-time</p>
+        <span class="hero-badge">✨ Powered by Advanced AI & ML</span>
+    </div>
+
+    <!-- Input Form -->
+    <div class="form-card">
+        <form method="POST" action="/">
+            <label class="form-label">📰 Enter news article or claim to verify:</label>
+            <textarea
+                name="news"
+                placeholder="Paste a news headline, article, or factual claim here...&#10;&#10;Example: 'Scientists discover new planet in our solar system'&#10;Example: 'Government announces new policy on education'&#10;Example: 'Celebrity makes controversial statement about politics'"
+                required
+            >{{ news_text }}</textarea>
+
+            <button type="submit" class="submit-btn">🔍 Analyze News Authenticity</button>
+        </form>
+    </div>
+
+    <!-- Result Section -->
+    {% if result %}
+    <div class="result-card">
+        <div class="result-header {% if 'FAKE' in result %}fake{% elif 'REAL' in result or 'VERIFIED' in result %}real{% else %}warning{% endif %}">
+            {{ result }}
+        </div>
+
+        <div class="result-details">
+            <div class="detail-item">
+                <div class="detail-label">💡 Explanation</div>
+                <div class="detail-value">{{ explanation }}</div>
+            </div>
+
+            {% if confidence %}
+            <div class="confidence-bar-container">
+                <div class="confidence-label">
+                    <span>📊 Confidence Level</span>
+                    <span>{{ confidence }}%</span>
+                </div>
+                <div class="confidence-bar-bg">
+                    <div class="confidence-bar-fill" style="width: {{ confidence }}%"></div>
+                </div>
+                <div class="confidence-note">
+                    ℹ️ Confidence indicates model certainty based on patterns, not absolute truth. Always verify from multiple trusted sources.
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Impact Section for Fake News -->
+        {% if 'FAKE' in result %}
+        <div class="impact-section">
+            <div class="impact-header negative">
+                <span class="impact-icon">⚠️</span>
+                <span>Why Fake News is Dangerous</span>
+            </div>
+            <div class="impact-list">
+                <div class="impact-item">
+                    <span class="impact-item-icon">🧠</span>
+                    <div class="impact-item-text">
+                        <div class="impact-item-title">Manipulates Public Opinion</div>
+                        <div class="impact-item-desc">Fake news deliberately misleads people, creating false beliefs and influencing decisions based on lies rather than facts.</div>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <span class="impact-item-icon">😰</span>
+                    <div class="impact-item-text">
+                        <div class="impact-item-title">Spreads Fear & Panic</div>
+                        <div class="impact-item-desc">False information can cause unnecessary anxiety, panic buying, and social unrest among communities.</div>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <span class="impact-item-icon">🤝</span>
+                    <div class="impact-item-text">
+                        <div class="impact-item-title">Divides Communities</div>
+                        <div class="impact-item-desc">Misinformation creates polarization, breaks trust between groups, and damages social harmony.</div>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <span class="impact-item-icon">⚖️</span>
+                    <div class="impact-item-text">
+                        <div class="impact-item-title">Undermines Democracy</div>
+                        <div class="impact-item-desc">False political news interferes with elections, weakens institutions, and erodes public trust in democratic processes.</div>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <span class="impact-item-icon">💔</span>
+                    <div class="impact-item-text">
+                        <div class="impact-item-title">Damages Reputations</div>
+                        <div class="impact-item-desc">Fake stories can destroy careers, businesses, and personal lives of innocent individuals without justification.</div>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <span class="impact-item-icon">⚕️</span>
+                    <div class="impact-item-text">
+                        <div class="impact-item-title">Health Risks</div>
+                        <div class="impact-item-desc">Medical misinformation can lead people to make dangerous health decisions, reject proven treatments, or try harmful remedies.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Impact Section for Real News -->
+        {% if 'REAL' in result or 'VERIFIED' in result %}
+        <div class="impact-section positive">
+            <div class="impact-header positive">
+                <span class="impact-icon">✅</span>
+                <span>How Real News Benefits Society</span>
+            </div>
+            <div class="impact-list">
+                <div class="impact-item">
+                    <span class="impact-item-icon">📚</span>
+                    <div class="impact-item-text">
+                        <div class="impact-item-title">Educates & Informs Citizens</div>
+                        <div class="impact-item-desc">Accurate news helps people understand complex issues, make informed decisions, and participate meaningfully in society.</div>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <span class="impact-item-icon">🏛️</span>
+                    <div class="impact-item-text">
+                        <div class="impact-item-title">Strengthens Democracy</div>
+                        <div class="impact-item-desc">Truthful journalism holds leaders accountable, exposes corruption, and empowers citizens to engage in democratic processes.</div>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <span class="impact-item-icon">🤝</span>
+                    <div class="impact-item-text">
+                        <div class="impact-item-title">Builds Trust & Unity</div>
+                        <div class="impact-item-desc">Reliable information fosters social cohesion, mutual understanding, and constructive dialogue between different communities.</div>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <span class="impact-item-icon">💡</span>
+                    <div class="impact-item-text">
+                        <div class="impact-item-title">Enables Better Decisions</div>
+                        <div class="impact-item-desc">Access to accurate information helps individuals make wise choices about health, finance, career, and daily life.</div>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <span class="impact-item-icon">🌍</span>
+                    <div class="impact-item-text">
+                        <div class="impact-item-title">Promotes Global Awareness</div>
+                        <div class="impact-item-desc">Real news connects people worldwide, fostering cultural understanding and cooperation on global challenges.</div>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <span class="impact-item-icon">🛡️</span>
+                    <div class="impact-item-text">
+                        <div class="impact-item-title">Protects Public Safety</div>
+                        <div class="impact-item-desc">Accurate reporting about emergencies, health alerts, and safety issues helps communities stay prepared and protected.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Features -->
+    <div class="features">
+        <div class="feature">
+            <div class="feature-icon">🤖</div>
+            <h3>ML-Powered Detection</h3>
+            <p>Advanced machine learning algorithms trained on thousands of verified articles to identify misinformation patterns</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">⚡</div>
+            <h3>Real-Time Analysis</h3>
+            <p>Instant verification and classification of news claims with comprehensive confidence scoring</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">🔍</div>
+            <h3>Multi-Source Verification</h3>
+            <p>Cross-references with Wikipedia, fact-checkers, and trusted news databases for accuracy</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">📊</div>
+            <h3>Impact Analysis</h3>
+            <p>Understand the real-world consequences of fake news and the value of truthful journalism</p>
+        </div>
+    </div>
+
+</div>
+
+<footer>
+    <p>© 2024 Fake News Detector | Combating Misinformation with Advanced AI & Machine Learning</p>
+</footer>
+
+</body>
+</html>
