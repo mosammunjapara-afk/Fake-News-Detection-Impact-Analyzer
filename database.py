@@ -329,3 +329,17 @@ class NewsDatabase:
         }
         conn.close()
         return stats
+
+    def delete_old_news(self, days: int = 3) -> int:
+        """Delete auto-collected articles older than N days. Returns count deleted."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute('''
+            DELETE FROM auto_collected_news
+            WHERE collected_at < datetime('now', '-' || ? || ' days')
+        ''', (days,))
+        deleted = cursor.rowcount
+        conn.commit()
+        conn.close()
+        print(f"🗑️  Deleted {deleted} articles older than {days} days")
+        return deleted
