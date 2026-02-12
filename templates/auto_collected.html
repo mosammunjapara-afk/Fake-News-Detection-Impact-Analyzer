@@ -516,7 +516,92 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* ─── REFRESH BAR ─── */
+        .refresh-bar {
+            background: rgba(124,58,237,0.08);
+            border: 1px solid rgba(124,58,237,0.25);
+            border-radius: 16px;
+            padding: 1.2rem 1.8rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .refresh-bar .status-info {
+            flex: 1;
+            font-size: 0.85rem;
+            color: #a0aec0;
+            min-width: 200px;
+        }
+        .refresh-bar .status-info strong { color: #fff; }
+        .refresh-bar .status-info #lastUpdate { color: #a78bfa; }
+        .btn-refresh {
+            background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+            color: #fff;
+            border: none;
+            padding: 0.75rem 1.6rem;
+            border-radius: 10px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        .btn-refresh:hover { opacity: 0.88; transform: translateY(-2px); }
+        .btn-refresh:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+        .btn-clear {
+            background: transparent;
+            border: 1px solid rgba(239,68,68,0.4);
+            color: #ef4444;
+            padding: 0.75rem 1.2rem;
+            border-radius: 10px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        .btn-clear:hover { background: rgba(239,68,68,0.1); }
+        .btn-clear:disabled { opacity: 0.4; cursor: not-allowed; }
+        .refresh-toast {
+            display: none;
+            position: fixed;
+            bottom: 2rem; right: 2rem;
+            background: #1a1a2e;
+            border: 1px solid rgba(124,58,237,0.4);
+            border-radius: 14px;
+            padding: 1rem 1.5rem;
+            color: #fff;
+            font-size: 0.9rem;
+            z-index: 9999;
+            max-width: 360px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            animation: toastIn 0.3s ease;
+        }
+        @keyframes toastIn {
+            from { opacity:0; transform:translateY(16px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+        .toast-icon { font-size: 1.3rem; margin-right: 8px; }
+        .spinner-sm {
+            display: inline-block;
+            width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+        }
+        @keyframes spin { to { transform:rotate(360deg); } }
     </style>
+
 </head>
 <body>
 
@@ -540,6 +625,29 @@
     </div>
 
     <!-- Statistics Summary -->
+    
+    <!-- ─── REFRESH BAR ─── -->
+    <div class="refresh-bar">
+        <div class="status-info">
+            <strong>📡 Live News Feed</strong><br>
+            Last updated: <span id="lastUpdate">Checking...</span>
+            &nbsp;·&nbsp; <span id="storedCount">—</span> articles stored last run
+        </div>
+        <button class="btn-clear" id="clearBtn" onclick="clearOldNews()">
+            🗑️ Clear Old News
+        </button>
+        <button class="btn-refresh" id="refreshBtn" onclick="forceRefresh()">
+            <span id="refreshIcon">🔄</span>
+            <span id="refreshText">Fetch Today's News</span>
+        </button>
+    </div>
+
+    <!-- Toast notification -->
+    <div class="refresh-toast" id="toast">
+        <span class="toast-icon" id="toastIcon">✅</span>
+        <span id="toastMsg">Done!</span>
+    </div>
+
     <div class="stats-summary">
         <div class="stat-box">
             <div class="stat-number">{{ total_count }}</div>
@@ -658,6 +766,83 @@
 <footer>
     <p>© 2024 Fake News Detector | Every Article Gets Unique AI-Generated Impact Analysis</p>
 </footer>
+
+
+<script>
+// ── Load status on page load ──
+async function loadStatus() {
+    try {
+        const r = await fetch('/api/news-status');
+        const d = await r.json();
+        if (d.status === 'ok') {
+            document.getElementById('lastUpdate').textContent = d.newest_article || 'Never';
+            document.getElementById('storedCount').textContent = d.articles_stored_last_run;
+        }
+    } catch(e) {}
+}
+loadStatus();
+
+// ── Force Refresh ──
+async function forceRefresh() {
+    const btn  = document.getElementById('refreshBtn');
+    const icon = document.getElementById('refreshIcon');
+    const txt  = document.getElementById('refreshText');
+    btn.disabled = true;
+    icon.innerHTML = '<span class="spinner-sm"></span>';
+    txt.textContent = 'Fetching fresh news...';
+    showToast('⏳', 'Fetching today's news from all sources...');
+
+    try {
+        const r = await fetch('/api/force-refresh', { method: 'POST' });
+        const d = await r.json();
+        if (d.status === 'success') {
+            showToast('✅', d.message || `Fetched ${d.stored} new articles!`);
+            setTimeout(() => location.reload(), 2500);
+        } else {
+            showToast('❌', d.message || 'Something went wrong');
+        }
+    } catch(e) {
+        showToast('❌', 'Network error: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        icon.textContent = '🔄';
+        txt.textContent = 'Fetch Today's News';
+    }
+}
+
+// ── Clear Old News ──
+async function clearOldNews() {
+    if (!confirm('Delete articles older than 3 days and then fetch fresh news?')) return;
+    const btn = document.getElementById('clearBtn');
+    btn.disabled = true;
+    showToast('🗑️', 'Clearing old articles...');
+    try {
+        const r = await fetch('/api/clear-old-news', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ days: 3 })
+        });
+        const d = await r.json();
+        showToast('✅', d.message || 'Old articles cleared');
+        setTimeout(() => forceRefresh(), 1500);
+    } catch(e) {
+        showToast('❌', 'Error: ' + e.message);
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// ── Toast helper ──
+let toastTimer = null;
+function showToast(icon, msg) {
+    document.getElementById('toastIcon').textContent = icon;
+    document.getElementById('toastMsg').textContent  = msg;
+    const t = document.getElementById('toast');
+    t.style.display = 'block';
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.style.display = 'none', 4000);
+}
+</script>
 
 </body>
 </html>
