@@ -23,7 +23,8 @@ vectorizer = joblib.load("model/vectorizer.pkl")
 
 # API Keys
 GOOGLE_FACT_API_KEY = os.getenv("GOOGLE_FACT_API_KEY")
-NEWS_API_KEY = os.getenv("NEWS_API_KEY")
+NEWS_API_KEY        = os.getenv("NEWS_API_KEY")
+NEWSDATA_API_KEY    = os.getenv("NEWSDATA_API_KEY")   # NEW: NewsData.io key
 
 # Initialize database
 db = NewsDatabase()
@@ -31,16 +32,11 @@ db = NewsDatabase()
 # Initialize AI Impact Generator
 impact_gen = ImpactGenerator()
 
-# Initialize and start news collector with AI impact generation
-if NEWS_API_KEY:
-    news_collector = IndianNewsCollector(NEWS_API_KEY, db, impact_gen)  # Pass impact generator
-    start_news_collector_thread(news_collector, model, vectorizer)
-    print("✅ Automatic news collection enabled")
-    print("📅 Collection schedule: Every 3 hours + 6 AM, 9 AM, 12 PM, 3 PM, 6 PM, 9 PM")
-    print("🔒 Duplicate prevention: Active")
-    print("🤖 AI Impact generation: Enabled for all articles")
-else:
-    print("⚠️ NEWS_API_KEY not found - set in .env file")
+# Initialize news collector (works even if only one key is present)
+news_collector = IndianNewsCollector(NEWS_API_KEY or "", db, impact_gen)
+start_news_collector_thread(news_collector, model, vectorizer)
+print("✅ Automatic news collection enabled")
+print("📅 Collection schedule: Every 3 hours + 6 AM, 9 AM, 12 PM, 3 PM, 6 PM, 9 PM")
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -260,3 +256,52 @@ if __name__ == "__main__":
     print("="*70 + "\n")
     
     app.run(debug=True, threaded=True)
+
+@app.route("/api/force-refresh", methods=["POST"])
+def force_refresh():
+    """Force fetch TODAY's fresh news — called from UI button"""
+    try:
+        print("\n🔄 FORCE REFRESH triggered from UI...")
+        stored, fake = news_collector.collect_daily_news(model, vectorizer)
+        return jsonify({
+            "status": "success",
+            "stored": stored,
+            "fake_detected": fake,
+            "message": f"Fetched {stored} new articles ({fake} fake detected)"
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/clear-old-news", methods=["POST"])
+def clear_old_news():
+    """Delete articles older than N days"""
+    try:
+        data = request.json or {}
+        days = int(data.get("days", 3))
+        deleted = db.delete_old_news(days=days)
+        return jsonify({
+            "status": "success",
+            "deleted": deleted,
+            "message": f"Deleted {deleted} articles older than {days} days"
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/news-status")
+def news_status():
+    """Returns latest collection info for the UI status bar"""
+    try:
+        stats  = db.get_collection_stats(limit=1)
+        latest = stats[0] if stats else None
+        recent = db.get_auto_collected_news(limit=1)
+        newest = recent[0]['collected_at'] if recent else "Never"
+        return jsonify({
+            "status": "ok",
+            "last_collection":          latest['collection_time'] if latest else "Never",
+            "newest_article":           newest,
+            "articles_stored_last_run": latest['articles_stored'] if latest else 0,
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
